@@ -10,17 +10,13 @@ class Level4WeightsBias extends StatefulWidget {
 }
 
 class _Level4WeightsBiasState extends State<Level4WeightsBias> {
-  // Stage management: 0 Learning, 1 Tune Output, 2 Matching, 3 Fine-tune Challenge
-  int currentStage = 0;
-  int score = 0;
-
-  // Shared parameters
   double weight1 = 0.5;
   double weight2 = 0.5;
   double bias = 0.0;
   double input1 = 1.0;
   double input2 = 1.0;
   double targetOutput = 0.8;
+  int score = 0;
   int currentStep = 0;
   bool showResult = false;
   bool showLearningSection = true;
@@ -60,11 +56,11 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      if (currentStage == 0) ...[
+                      if (showLearningSection) ...[
                         _buildLearningSection(),
                         const SizedBox(height: 20),
-                      ] else if (currentStage == 1) ...[
-                        _buildStageHeader('Stage 1: Tune Output'),
+                      ] else ...[
+                        _buildStepCard(),
                         const SizedBox(height: 20),
                         _buildBalanceScale(weightedSum, output),
                         const SizedBox(height: 20),
@@ -73,16 +69,6 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
                         _buildTargetDisplay(output, error),
                         const SizedBox(height: 20),
                         if (showResult) _buildResultCard(error),
-                      ] else if (currentStage == 2) ...[
-                        _buildStageHeader('Stage 2: Match Concepts'),
-                        const SizedBox(height: 20),
-                        _buildMatchingGame(),
-                        const SizedBox(height: 20),
-                      ] else if (currentStage == 3) ...[
-                        _buildStageHeader('Stage 3: Fine-tune Challenge'),
-                        const SizedBox(height: 20),
-                        _buildChallenge(output),
-                        const SizedBox(height: 20),
                       ],
                     ],
                   ),
@@ -91,34 +77,6 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
               _buildNavigationButtons(),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStageHeader(String title) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.red,
-          ),
-          textAlign: TextAlign.center,
         ),
       ),
     );
@@ -133,7 +91,7 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                currentStage == 0 ? 'Learning Section' : 'Stage $currentStage',
+                showLearningSection ? 'Learning Section' : 'Step ${currentStep + 1}/${steps.length}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -152,7 +110,7 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
-            value: currentStage == 0 ? 0.0 : (currentStage / 3),
+            value: showLearningSection ? 0.0 : (currentStep + 1) / steps.length,
             backgroundColor: Colors.white.withOpacity(0.3),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
           ),
@@ -660,10 +618,10 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          if (currentStage == 0) ...[
+          if (showLearningSection) ...[
             Expanded(
               child: ElevatedButton(
-                onPressed: () => setState(() { currentStage = 1; showResult = false; }),
+                onPressed: _startQuiz,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.red,
@@ -673,15 +631,15 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
                   ),
                 ),
                 child: const Text(
-                  'Start Stage 1',
+                  'Start Quiz',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-          ] else if (currentStage == 1) ...[
+          ] else if (showResult) ...[
             Expanded(
               child: ElevatedButton(
-                onPressed: showResult ? () => setState(() { currentStage = 2; showResult = false; score += 10; }) : null,
+                onPressed: _nextStep,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.red,
@@ -691,33 +649,34 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
                   ),
                 ),
                 child: Text(
-                  'Next: Matching',
+                  currentStep < steps.length - 1 ? 'Next Step' : 'Complete Level',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-          ] else if (currentStage == 2) ...[
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _matchingComplete ? () => setState(() { currentStage = 3; score += 10; }) : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          ] else ...[
+            if (currentStep > 0)
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _previousStep,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.red,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Previous',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
-                child: Text(
-                  _matchingComplete ? 'Start Challenge' : 'Match items',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
               ),
-            ),
-          ] else if (currentStage == 3) ...[
+            if (currentStep > 0) const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-                onPressed: _challengeSuccess ? _completeLevel : null,
+                onPressed: _checkResult,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.red,
@@ -727,7 +686,7 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
                   ),
                 ),
                 child: const Text(
-                  'Complete Level',
+                  'Check Result',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -757,125 +716,30 @@ class _Level4WeightsBiasState extends State<Level4WeightsBias> {
     });
   }
 
-  // Stage 2 matching
-  final Map<String, String> _pairs = const {
-    'Increase weight': 'Stronger influence',
-    'Decrease weight': 'Weaker influence',
-    'Positive bias': 'Easier to fire',
-    'Negative bias': 'Harder to fire',
-  };
-  List<String> _left = [];
-  List<String> _right = [];
-  List<String> _matched = [];
-  String? _selLeft;
-  bool _matchingComplete = false;
-
-  Widget _buildMatchingGame() {
-    if (_left.isEmpty && _right.isEmpty && !_matchingComplete) {
-      _left = _pairs.keys.toList()..shuffle();
-      _right = _pairs.values.toList()..shuffle();
+  void _nextStep() {
+    if (currentStep < steps.length - 1) {
+      setState(() {
+        currentStep++;
+        showResult = false;
+      });
+    } else {
+      _completeLevel();
     }
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0,5)),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    const Text('Concepts', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                    const SizedBox(height: 8),
-                    ..._left.map((e) => _matchTile(e, _selLeft == e, Colors.red, (){ setState(()=> _selLeft = e);})),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  children: [
-                    const Text('Effects', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                    const SizedBox(height: 8),
-                    ..._right.map((r) => _matchTile(r, false, Colors.orange, (){
-                      if (_selLeft==null) return; 
-                      final correct = _pairs[_selLeft]==r; 
-                      setState((){
-                        if (correct){
-                          _matched.add('$_selLeft - $r');
-                          _left.remove(_selLeft);
-                          _right.remove(r);
-                          score += 10;
-                          if (_left.isEmpty) _matchingComplete = true;
-                        }
-                        _selLeft = null; 
-                      });
-                    })),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (_matched.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ..._matched.map((m)=> Text('✓ $m', style: const TextStyle(color: Colors.green)))
-          ]
-        ],
-      ),
-    );
   }
 
-  Widget _matchTile(String text, bool sel, Color color, VoidCallback onTap){
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: sel? color.withOpacity(0.2): Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: sel? color: Colors.grey.withOpacity(0.3), width: sel? 2:1),
-          ),
-          child: Text(text, style: TextStyle(color: sel? color: Colors.black87, fontWeight: sel? FontWeight.bold: FontWeight.normal)),
-        ),
-      ),
-    );
+  void _previousStep() {
+    if (currentStep > 0) {
+      setState(() {
+        currentStep--;
+        showResult = false;
+      });
+    }
   }
 
-  // Stage 3 challenge: reach target within error
-  bool get _challengeSuccess {
-    final output = _sigmoid((input1 * weight1) + (input2 * weight2) + bias);
-    return (output - targetOutput).abs() < 0.08;
-  }
-
-  Widget _buildChallenge(double output){
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0,5))],
-      ),
-      child: Column(
-        children: [
-          const Text('Adjust sliders to get Output within 0.08 of Target', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-          const SizedBox(height: 12),
-          _buildControls(),
-          const SizedBox(height: 12),
-          _buildTargetDisplay(output, (output - targetOutput).abs()),
-          const SizedBox(height: 8),
-          Text(_challengeSuccess? 'Great! You are within range.' : 'Keep tuning...', style: TextStyle(color: _challengeSuccess? Colors.green: Colors.orange, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
+  void _startQuiz() {
+    setState(() {
+      showLearningSection = false;
+    });
   }
 
   void _completeLevel() {

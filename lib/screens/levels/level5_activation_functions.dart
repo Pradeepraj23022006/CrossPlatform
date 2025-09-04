@@ -10,8 +10,6 @@ class Level5ActivationFunctions extends StatefulWidget {
 }
 
 class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
-  // 0 Learning, 1 Sandbox, 2 Identify Function, 3 Guess-the-Function
-  int currentStage = 0;
   String selectedFunction = 'sigmoid';
   double inputValue = 0.0;
   int score = 0;
@@ -52,11 +50,11 @@ class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
                   padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
                   child: Column(
                     children: [
-                      if (currentStage == 0) ...[
+                      if (showLearningSection) ...[
                         _buildLearningSection(),
                         const SizedBox(height: 20),
-                      ] else if (currentStage == 1) ...[
-                        _buildStageHeader('Stage 1: Sandbox'),
+                      ] else ...[
+                        _buildStepCard(),
                         const SizedBox(height: 20),
                         _buildFunctionSelector(),
                         const SizedBox(height: 20),
@@ -65,16 +63,8 @@ class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
                         _buildInputSlider(),
                         const SizedBox(height: 20),
                         _buildOutputDisplay(output),
-                      ] else if (currentStage == 2) ...[
-                        _buildStageHeader('Stage 2: Identify from Graph'),
                         const SizedBox(height: 20),
-                        _buildIdentifyFromGraph(),
-                        const SizedBox(height: 20),
-                      ] else if (currentStage == 3) ...[
-                        _buildStageHeader('Stage 3: Guess the Function'),
-                        const SizedBox(height: 20),
-                        _buildGuessFunctionGame(),
-                        const SizedBox(height: 20),
+                        if (showResult) _buildResultCard(),
                       ],
                       // Add extra space at bottom to ensure navigation buttons don't overlap
                       const SizedBox(height: 100),
@@ -99,7 +89,7 @@ class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                currentStage == 0 ? 'Learning Section' : 'Stage $currentStage',
+                showLearningSection ? 'Learning Section' : 'Step ${currentStep + 1}/${steps.length}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -118,7 +108,7 @@ class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
-            value: currentStage == 0 ? 0.0 : (currentStage / 3),
+            value: showLearningSection ? 0.0 : (currentStep + 1) / steps.length,
             backgroundColor: Colors.white.withOpacity(0.3),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
           ),
@@ -583,10 +573,10 @@ class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          if (currentStage == 0) ...[
+          if (showLearningSection) ...[
             Expanded(
               child: ElevatedButton(
-                onPressed: () => setState(() { currentStage = 1; score += 5; }),
+                onPressed: _startQuiz,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.purple,
@@ -596,33 +586,15 @@ class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
                   ),
                 ),
                 child: const Text(
-                  'Start Stage 1',
+                  'Start Quiz',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-          ] else if (currentStage == 1) ...[
+          ] else if (showResult) ...[
             Expanded(
               child: ElevatedButton(
-                onPressed: () => setState(() { currentStage = 2; score += 10; }),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.purple,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Next: Identify',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ] else if (currentStage == 2) ...[
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _identifyAnswered ? () => setState(() { currentStage = 3; score += 10; }) : null,
+                onPressed: _nextStep,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.purple,
@@ -632,15 +604,34 @@ class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
                   ),
                 ),
                 child: Text(
-                  _identifyAnswered ? 'Next: Guess Game' : 'Answer first',
+                  currentStep < steps.length - 1 ? 'Next Step' : 'Complete Level',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-          ] else if (currentStage == 3) ...[
+          ] else ...[
+            if (currentStep > 0)
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _previousStep,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.purple,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Previous',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            if (currentStep > 0) const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-                onPressed: _guessComplete ? _completeLevel : null,
+                onPressed: _checkResult,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.purple,
@@ -650,7 +641,7 @@ class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
                   ),
                 ),
                 child: const Text(
-                  'Complete Level',
+                  'Check Result',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -754,79 +745,6 @@ class _Level5ActivationFunctionsState extends State<Level5ActivationFunctions> {
         ],
       ),
     );
-  }
-
-  // Stage headers for consistency
-  Widget _buildStageHeader(String title){
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 5, offset: const Offset(0,2))]),
-      child: Center(child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.purple))),
-    );
-  }
-
-  // Stage 2: Identify function from graph
-  bool _identifyAnswered = false;
-  String _identifyCorrect = 'relu';
-  String? _identifySelected;
-
-  Widget _buildIdentifyFromGraph(){
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0,5))]),
-      child: Column(children: [
-        const Text('Which function does this graph represent?', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.purple)),
-        const SizedBox(height: 12),
-        SizedBox(height: 180, child: CustomPaint(painter: FunctionGraphPainter('relu', 0.0))),
-        const SizedBox(height: 12),
-        Wrap(spacing: 12, children: [
-          _idButton('sigmoid'),
-          _idButton('relu'),
-          _idButton('tanh'),
-        ]),
-        if (_identifyAnswered)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(_identifySelected==_identifyCorrect? 'Correct!': 'Try again in next stage.', style: TextStyle(color: _identifySelected==_identifyCorrect? Colors.green: Colors.red, fontWeight: FontWeight.bold)),
-          ),
-      ]),
-    );
-  }
-
-  Widget _idButton(String value){
-    final sel = _identifySelected==value;
-    return GestureDetector(
-      onTap: (){ setState((){ _identifySelected=value; _identifyAnswered=true; if (value==_identifyCorrect) score+=10; }); },
-      child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: sel? Colors.purple: Colors.grey.withOpacity(0.2), borderRadius: BorderRadius.circular(20), border: Border.all(color: sel? Colors.purple: Colors.grey)), child: Text(value.toUpperCase(), style: TextStyle(color: sel? Colors.white: Colors.grey[800], fontWeight: FontWeight.bold))),
-    );
-  }
-
-  // Stage 3: Guess-the-function mini game
-  bool _guessComplete = false;
-  String _mysteryFunction = 'tanh';
-  double _mysteryInput = 0.0;
-
-  Widget _buildGuessFunctionGame(){
-    final out = _calculateOutput(_mysteryInput, _mysteryFunction);
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0,5))]),
-      child: Column(children: [
-        const Text('Adjust input and guess the hidden function!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.purple)),
-        const SizedBox(height: 12),
-        Slider(value: _mysteryInput, min: -2, max: 2, divisions: 40, activeColor: Colors.purple, onChanged: (v)=> setState(()=> _mysteryInput=v)),
-        Text('Output: ${out.toStringAsFixed(3)}'),
-        const SizedBox(height: 8),
-        Wrap(spacing: 12, children: [
-          _guessBtn('sigmoid'), _guessBtn('relu'), _guessBtn('tanh')
-        ]),
-        if (_guessComplete) const Padding(padding: EdgeInsets.only(top:8), child: Text('Well done! Level ready to complete.', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))),
-      ]),
-    );
-  }
-
-  Widget _guessBtn(String f){
-    return ElevatedButton(onPressed: _guessComplete? null: (){ setState(()=> _guessComplete = f==_mysteryFunction); if (f==_mysteryFunction) score+=15; }, style: ElevatedButton.styleFrom(backgroundColor: Colors.purple, foregroundColor: Colors.white), child: Text(f.toUpperCase()));
   }
 }
 

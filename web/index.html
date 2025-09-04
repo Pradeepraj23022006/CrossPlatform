@@ -31,8 +31,29 @@
 
   <title>neural_network_game</title>
   <link rel="manifest" href="manifest.json">
+  
+  <!-- Preload fonts to avoid loading issues -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+
 </head>
 <body>
+  <script>
+    // Error handling for network issues
+    window.addEventListener('error', function(e) {
+      if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
+        console.warn('Failed to load resource:', e.target.src || e.target.href);
+        // Continue without the failed resource
+      }
+    });
+    
+    // Simple error logging for debugging
+    window.addEventListener('unhandledrejection', function(event) {
+      console.warn('Unhandled promise rejection:', event.reason);
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

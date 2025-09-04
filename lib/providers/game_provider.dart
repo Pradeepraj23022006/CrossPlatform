@@ -7,7 +7,7 @@ class GameProvider with ChangeNotifier {
   int _totalScore = 0;
   int _currentLevel = 0;
   
-  // User authentication
+
   String? _userEmail;
   String? _userName;
   bool _isLoggedIn = false;
@@ -17,7 +17,7 @@ class GameProvider with ChangeNotifier {
   int get totalScore => _totalScore;
   int get currentLevel => _currentLevel;
   
-  // User getters
+
   String? get userEmail => _userEmail;
   String? get userName => _userName;
   bool get isLoggedIn => _isLoggedIn;
@@ -95,7 +95,7 @@ class GameProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // User authentication methods
+
   Future<void> setUser(String email, String name) async {
     _userEmail = email;
     _userName = name;
@@ -122,7 +122,7 @@ class GameProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Method to clear all stored data (for testing)
+
   Future<void> clearAllData() async {
     _userEmail = null;
     _userName = null;

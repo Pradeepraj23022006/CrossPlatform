@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
                     
-                    // App Title
+                    
                     const Text(
                       'Neural Network Game',
                       style: TextStyle(
@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 48),
                     
-                    // Login Card
+                    
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -147,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
                           
-                          // Password Field
+
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
@@ -190,7 +190,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 24),
                           
-                          // Login Button
                           SizedBox(
                             width: double.infinity,
                             height: 50,
@@ -275,28 +274,25 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    // Simulate API call delay
+    
     await Future.delayed(const Duration(seconds: 1));
 
-    // For demo purposes, accept any valid email/password
-    // In a real app, you would validate against a backend
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // Demo account validation
     if (email == 'demo@example.com' && password == 'demo123') {
-      // Set user data in provider
+      
       final gameProvider = Provider.of<GameProvider>(context, listen: false);
       gameProvider.setUser(email, 'Demo User');
       
-      // Navigate to home screen
+      
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       }
     } else {
-      // Show error for non-demo accounts
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

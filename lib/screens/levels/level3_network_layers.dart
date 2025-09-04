@@ -10,39 +10,13 @@ class Level3NetworkLayers extends StatefulWidget {
 }
 
 class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
-  // Stage management: 0 Learning, 1 Build Layers, 2 Match Functions, 3 Order Flow
-  int currentStage = 0;
-  int currentQuestionIndex = 0;
-  int score = 0;
-
-  // Stage 1: drag neurons into layers
   List<String> inputLayer = [];
   List<String> hiddenLayer = [];
   List<String> outputLayer = [];
   List<String> availableNeurons = ['N1', 'N2', 'N3', 'N4', 'N5', 'N6'];
   bool showLearningSection = true;
   bool networkComplete = false;
-
-  // Stage 2: matching game (layer -> function)
-  final Map<String, String> matchingPairs = const {
-    'Input Layer': 'Receives data',
-    'Hidden Layer': 'Processes patterns',
-    'Output Layer': 'Produces result',
-  };
-  List<String> leftItems = [];
-  List<String> rightItems = [];
-  List<String> matchedPairs = [];
-  String? selectedLeftItem;
-  String? selectedRightItem;
-  bool matchingComplete = false;
-
-  // Stage 3: word puzzle
-  String puzzleWord = 'NEURAL';
-  List<String> scrambledLetters = [];
-  List<String> userAnswer = [];
-  List<String> availableLetters = [];
-  bool puzzleComplete = false;
-  String hint = 'Think about what processes information in layers';
+  int score = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -69,27 +43,15 @@ class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      if (currentStage == 0) ...[
+                      if (showLearningSection) ...[
                         _buildLearningSection(),
                         const SizedBox(height: 20),
-                      ] else if (currentStage == 1) ...[
-                        _buildStageHeader(),
-                        const SizedBox(height: 20),
+                      ] else ...[
                         _buildNetworkBuilder(),
                         const SizedBox(height: 20),
                         _buildAvailableNeurons(),
                         const SizedBox(height: 20),
                         if (networkComplete) _buildSuccessCard(),
-                        const SizedBox(height: 20),
-                      ] else if (currentStage == 2) ...[
-                        _buildStageHeader(),
-                        const SizedBox(height: 20),
-                        _buildMatchingGame(),
-                        const SizedBox(height: 20),
-                      ] else if (currentStage == 3) ...[
-                        _buildStageHeader(),
-                        const SizedBox(height: 20),
-                        _buildOrderingGame(),
                         const SizedBox(height: 20),
                       ],
                     ],
@@ -104,45 +66,6 @@ class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
     );
   }
 
-  Widget _buildStageHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            'Stage $currentStage',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.orange,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            currentStage == 1
-                ? 'Build the three-layer network'
-                : currentStage == 2
-                    ? 'Match layers with their functions'
-                    : 'Arrange the flow: Input → Hidden → Output',
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildProgressBar() {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -152,7 +75,7 @@ class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                currentStage == 0 ? 'Learning Section' : 'Stage $currentStage',
+                showLearningSection ? 'Learning Section' : 'Build Network',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -171,7 +94,7 @@ class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
-            value: currentStage == 0 ? 0.0 : (currentStage / 3).clamp(0.0, 1.0),
+            value: showLearningSection ? 0.0 : (networkComplete ? 1.0 : 0.5),
             backgroundColor: Colors.white.withOpacity(0.3),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
           ),
@@ -556,353 +479,6 @@ class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
     );
   }
 
-  // Stage 2 matching UI
-  Widget _buildMatchingGame() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Text(
-            'Match Layers to Their Functions',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.orange,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    const Text('Layers', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-                    const SizedBox(height: 8),
-                    ...leftItems.map((item) => _buildSelectable(item, selectedLeftItem == item, Colors.blue, _selectLeft)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  children: [
-                    const Text('Functions', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                    const SizedBox(height: 8),
-                    ...rightItems.map((item) => _buildSelectable(item, selectedRightItem == item, Colors.green, _selectRight)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (matchedPairs.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.withOpacity(0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: matchedPairs.map((p) => Text('✓ $p', style: const TextStyle(color: Colors.orange))).toList(),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSelectable(String text, bool selected, Color color, Function(String) onTap) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: InkWell(
-        onTap: () => onTap(text),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? color.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: selected ? color : Colors.grey.withOpacity(0.3), width: selected ? 2 : 1),
-          ),
-          child: Text(
-            text,
-            style: TextStyle(color: selected ? color : Colors.black87, fontWeight: selected ? FontWeight.bold : FontWeight.normal),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _selectLeft(String item) {
-    setState(() {
-      selectedLeftItem = item;
-      selectedRightItem = null;
-    });
-  }
-
-  void _selectRight(String item) {
-    if (selectedLeftItem == null) return;
-    final correct = matchingPairs[selectedLeftItem] == item;
-    setState(() {
-      if (correct) {
-        matchedPairs.add('$selectedLeftItem - $item');
-        leftItems.remove(selectedLeftItem);
-        rightItems.remove(item);
-        score += 10;
-        if (leftItems.isEmpty) matchingComplete = true;
-      }
-      selectedLeftItem = null;
-      selectedRightItem = null;
-    });
-  }
-
-  // Stage 3 word puzzle UI
-  Widget _buildOrderingGame() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Text(
-            'Unscramble the Word Puzzle',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Hint: $hint',
-            style: const TextStyle(fontSize: 14, color: Colors.grey, fontStyle: FontStyle.italic),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          // Answer slots
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.orange.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'Your Answer:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(puzzleWord.length, (index) {
-                    return _buildAnswerSlot(index);
-                  }),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Available letters
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  'Available Letters:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: availableLetters.map((letter) => _buildLetterTile(letter)).toList(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _canCheckAnswer() ? _checkPuzzleAnswer : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text('Check Answer'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _resetPuzzle,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text('Reset'),
-                ),
-              ),
-            ],
-          ),
-          if (puzzleComplete) ...[
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Column(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white, size: 32),
-                  SizedBox(height: 8),
-                  Text(
-                    'Correct! NEURAL networks process information in layers!',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnswerSlot(int index) {
-    final letter = userAnswer[index];
-    return GestureDetector(
-      onTap: () => _removeLetterFromSlot(index),
-      child: Container(
-        width: 40,
-        height: 50,
-        decoration: BoxDecoration(
-          color: letter.isEmpty ? Colors.white : Colors.orange,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.orange, width: 2),
-        ),
-        child: Center(
-          child: Text(
-            letter,
-            style: TextStyle(
-              color: letter.isEmpty ? Colors.grey : Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLetterTile(String letter) {
-    return GestureDetector(
-      onTap: () => _addLetterToNextSlot(letter),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.orange,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white, width: 2),
-        ),
-        child: Center(
-          child: Text(
-            letter,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _addLetterToNextSlot(String letter) {
-    final emptyIndex = userAnswer.indexWhere((slot) => slot.isEmpty);
-    if (emptyIndex != -1) {
-      setState(() {
-        userAnswer[emptyIndex] = letter;
-        availableLetters.remove(letter);
-      });
-    }
-  }
-
-  void _removeLetterFromSlot(int index) {
-    final letter = userAnswer[index];
-    if (letter.isNotEmpty) {
-      setState(() {
-        userAnswer[index] = '';
-        availableLetters.add(letter);
-      });
-    }
-  }
-
-  bool _canCheckAnswer() {
-    return !userAnswer.contains('');
-  }
-
-  void _checkPuzzleAnswer() {
-    final answer = userAnswer.join('');
-    setState(() {
-      if (answer == puzzleWord) {
-        puzzleComplete = true;
-        score += 20;
-      }
-    });
-  }
-
-  void _resetPuzzle() {
-    setState(() {
-      userAnswer = List.filled(puzzleWord.length, '');
-      availableLetters = List.from(scrambledLetters);
-      puzzleComplete = false;
-    });
-  }
-
-  bool _checkOrder() {
-    // This method is no longer used but kept for compatibility
-    return true;
-  }
   Widget _buildConnectionLines() {
     return Container(
       height: 100,
@@ -955,10 +531,10 @@ class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          if (currentStage == 0) ...[
+          if (showLearningSection) ...[
             Expanded(
               child: ElevatedButton(
-                onPressed: _startStage1,
+                onPressed: _startBuilding,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.orange,
@@ -968,15 +544,15 @@ class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
                   ),
                 ),
                 child: const Text(
-                  'Start Stage 1',
+                  'Start Building',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
-          ] else if (currentStage == 1) ...[
+          ] else ...[
             Expanded(
               child: ElevatedButton(
-                onPressed: networkComplete ? _goToStage2 : null,
+                onPressed: networkComplete ? _completeLevel : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.orange,
@@ -986,43 +562,7 @@ class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
                   ),
                 ),
                 child: Text(
-                  networkComplete ? 'Go to Stage 2' : 'Build Network',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ] else if (currentStage == 2) ...[
-            Expanded(
-              child: ElevatedButton(
-                onPressed: matchingComplete ? _goToStage3 : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.orange,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  matchingComplete ? 'Go to Stage 3' : 'Match Pairs',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ] else if (currentStage == 3) ...[
-            Expanded(
-              child: ElevatedButton(
-                onPressed: puzzleComplete ? _completeLevel : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.orange,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  puzzleComplete ? 'Complete Level' : 'Solve the puzzle',
+                  networkComplete ? 'Complete Level' : 'Build Network',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -1042,43 +582,9 @@ class _Level3NetworkLayersState extends State<Level3NetworkLayers> {
     }
   }
 
-  void _startStage1() {
+  void _startBuilding() {
     setState(() {
-      currentStage = 1;
-      // reset stage 1 state
-      inputLayer.clear();
-      hiddenLayer.clear();
-      outputLayer.clear();
-      availableNeurons = ['N1', 'N2', 'N3', 'N4', 'N5', 'N6'];
-      networkComplete = false;
-    });
-  }
-
-  void _initializeMatchingGame() {
-    leftItems = matchingPairs.keys.toList()..shuffle();
-    rightItems = matchingPairs.values.toList()..shuffle();
-    matchedPairs.clear();
-    selectedLeftItem = null;
-    selectedRightItem = null;
-    matchingComplete = false;
-  }
-
-  void _goToStage2() {
-    setState(() {
-      currentStage = 2;
-      _initializeMatchingGame();
-      score += 10;
-    });
-  }
-
-  void _goToStage3() {
-    setState(() {
-      currentStage = 3;
-      // Initialize word puzzle
-      scrambledLetters = puzzleWord.split('')..shuffle();
-      userAnswer = List.filled(puzzleWord.length, '');
-      availableLetters = List.from(scrambledLetters);
-      score += 10;
+      showLearningSection = false;
     });
   }
 
